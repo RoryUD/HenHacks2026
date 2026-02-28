@@ -1,32 +1,30 @@
-browser.browserAction.onClicked.addListener(async () => {
+browser.runtime.onMessage.addListener(async (message) => {
   try {
-    // Create canvas
-    const canvas = new OffscreenCanvas(500, 300);
+    const { width, height } = message;
+
+    const canvas = new OffscreenCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
-    // Background
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, 500, 300);
+    ctx.fillRect(0, 0, width, height);
 
-    // Text
     ctx.fillStyle = "#000000";
-    ctx.font = "30px Arial";
-    ctx.fillText("Hello from Firefox Extension!", 50, 150);
+    ctx.font = `${Math.floor(height / 10)}px Arial`;
 
-    // Convert canvas to blob
+    const text = "Hello from Firefox Extension!";
+    const textWidth = ctx.measureText(text).width;
+
+    ctx.fillText(text, (width - textWidth) / 2, height / 2);
+
     const blob = await canvas.convertToBlob({ type: "image/png" });
-
-    // Create object URL
     const url = URL.createObjectURL(blob);
 
-    // Download image
     await browser.downloads.download({
-      url: url,
-      filename: "BlankWithText.png",
+      url,
+      filename: `BlankWithText_${width}x${height}.png`,
       saveAs: false
     });
 
-    console.log("Image downloaded successfully!");
   } catch (err) {
     console.error("Download failed:", err);
   }
