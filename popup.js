@@ -60,3 +60,28 @@ document.getElementById("create").addEventListener("click", async () => {
 
   window.close();
 });
+
+// Enlarge images by downloading and put on separate document!
+document.getElementById("dw-pages").addEventListener("click", async () => {
+  const numPages = parseInt(document.getElementById("pages").value, 10);
+  try {
+        // Find the current active tab in the current window
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        const activeTab = tabs[0];
+
+        if (!activeTab) return;
+
+        // Send the message to download.js
+        console.log("Sending message to content script...");
+        const response = await browser.tabs.sendMessage(activeTab.id, { 
+            action: "START_DOWNLOAD",
+            limit: numPages
+        });
+
+        console.log("Content script responded:", response);
+    } catch (error) {
+        // This is where the "Uncaught (in promise)" usually comes from
+        console.error("Could not communicate with the page. Is it a Shonen Jump page?", error);
+        alert("Error: Make sure you are on the manga reader page and refresh it.");
+    }
+});
