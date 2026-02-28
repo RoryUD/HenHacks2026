@@ -13,7 +13,7 @@ document.addEventListener("MangaTextDetected", (e) => {
         data.results.forEach((item, index) => {
             console.log(`[Text Block ${index + 1}]`);
             console.log(`  Content:  ${item.text}`);
-            console.log(`  Position: [x:${item.position[0]}, y:${item.position[1]}, w:${item.position[2]}, h:${item.position[3]}]`);
+            console.log(`  Position: [Left:${item.position[0]}, Top:${item.position[1]}, Right:${item.position[2]}, Bottom:${item.position[3]}]`);
             console.log(`  Size:     ${item.font_size}`);
             console.log(`  Vertical: ${item.vertical}`);
             console.log('-----------------------------');
