@@ -1,8 +1,21 @@
 <!DOCTYPE html>
 <html>
 <body>
+  <h3>Image Size</h3>
   <label>Width: <input id="width" type="number" value="800"></label><br>
   <label>Height: <input id="height" type="number" value="600"></label><br>
+
+  <h3>Text to Display</h3>
+  <label>Text:
+    <input id="text" type="text" value="Hello from Firefox Extension!" size="40">
+  </label><br>
+
+  <h3>Text Area (Bounding Box)</h3>
+  <label>Top Left X: <input id="x1" type="number" value="100"></label><br>
+  <label>Top Left Y: <input id="y1" type="number" value="200"></label><br>
+  <label>Bottom Right X: <input id="x2" type="number" value="700"></label><br>
+  <label>Bottom Right Y: <input id="y2" type="number" value="400"></label><br>
+
   <button id="create">Create Image</button>
 
   <script src="popup.js"></script>
