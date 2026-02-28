@@ -5,8 +5,10 @@
 
   "description": "Enlarges Text",
   "permissions": [
-  	"downloads"
+  	"downloads",
+	"https://cdn-ak-img.shonenjumpplus.com/*"
   ],
+
   "icons": {
     "48": "icons/book.png"
   },
@@ -14,7 +16,7 @@
   "content_scripts": [
     {
       "matches": ["https://shonenjumpplus.com/episode/*"],
-      "js": ["main.js", "download_pages.js"]
+      "js": ["download_pages.js","main.js"]
     }
   ]
 }

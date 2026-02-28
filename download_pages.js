@@ -23,15 +23,23 @@ async function downloadAllShonenPages(limit) {
 		console.log(`Processing page ${pageNum}...`);
 
 		try {
+			const response = await fetch(page.src);
+			const blob = await response.blob();
+
+			const objectURL = URL.createObjectURL(blob);
+
 			// Load Scrambled Image
 			const img = new Image();
-			img.crossOrigin = "anonymous";
-			img.src = page.src;
-
-			await new Promise((res, rej) => {
-				img.onload = res;
-				img.onerror = () => rej(`Failed to load page ${pageNum}`);
+			const imageLoaded = new Promise((res, rej) => {
+    			img.onload = () => {
+        			URL.revokeObjectURL(objectURL); // Clean up memory
+        			res();
+    			};
+    			img.onerror = rej;
 			});
+
+			img.src = objectURL;
+			await imageLoaded;
 
 			// Setup Canvas
 			const canvas = document.createElement('canvas');
