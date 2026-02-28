@@ -12,6 +12,7 @@ from manga_ocr import MangaOcr
 # Import Comic Text Detector
 from inference import TextDetector
 
+
 class MangaTextExtractor:
     def __init__(self, detector_model_path=None, device='cpu'):
         """
@@ -59,7 +60,15 @@ class MangaTextExtractor:
         for blk in blk_list:
             # blk.xyxy is in the format [xmin, ymin, xmax, ymax]
             xmin, ymin, xmax, ymax = map(int, blk.xyxy)
-            formatted_boxes.append((xmin, ymin, xmax, ymax))
+            formatted_boxes.append({
+                "position": (xmin, ymin, xmax, ymax),
+                "font_size": blk.font_size,
+                "lines": blk.lines_array().tolist(),
+                "angle": blk.angle,
+                "vertical": blk.vertical,
+                "fg_color": (blk.fg_r, blk.fg_g, blk.fg_b),
+                "bg_color": (blk.bg_r, blk.bg_g, blk.bg_b)
+            })
                 
         return formatted_boxes
 
@@ -76,7 +85,13 @@ class MangaTextExtractor:
                         [
                             {
                                 "position": (xmin, ymin, xmax, ymax),
-                                "text": "Hello World"
+                                "text": "Hello World",
+                                "font_size": 24.5,
+                                "lines": [[...], ...],
+                                "angle": 0,
+                                "vertical": True,
+                                "fg_color": (0, 0, 0),
+                                "bg_color": (255, 255, 255)
                             },
                             ...
                         ]
@@ -89,13 +104,14 @@ class MangaTextExtractor:
         except Exception as e:
             raise IOError(f"Failed to open image {image_path}: {e}")
         
-        # 1. Get all speech bubble coordinates (positions)
-        bounding_boxes = self._get_boxes_from_detector(image_path) 
+        # 1. Get all speech bubble coordinates (positions) and metadata
+        bubble_data_list = self._get_boxes_from_detector(image_path) 
         
         results = []
         
         # 2. Loop through and process the number of found speech bubbles
-        for i, box in enumerate(bounding_boxes):
+        for i, data in enumerate(bubble_data_list):
+            box = data["position"]
             # Crop only the speech bubble part using the coordinates
             cropped_img = original_img.crop(box)
             
@@ -106,6 +122,12 @@ class MangaTextExtractor:
             results.append({
                 "id": i,
                 "position": box,
+                "font_size": data["font_size"],
+                "lines": data["lines"],
+                "angle": data["angle"],
+                "vertical": data["vertical"],
+                "fg_color": data["fg_color"],
+                "bg_color": data["bg_color"],
                 "text": text
             })
             
@@ -127,6 +149,9 @@ if __name__ == "__main__":
         for i, data in enumerate(page_data):
             print(f"【Bubble {i+1}】")
             print(f"Position: {data['position']}")
+            print(f"Font Size: {data['font_size']}")
+            print(f"Vertical: {data['vertical']}")
+            print(f"Angle: {data['angle']}")
             print(f"Text: {data['text']}\n")
             
     except Exception as e:
