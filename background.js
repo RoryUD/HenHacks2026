@@ -5,20 +5,20 @@ browser.runtime.onMessage.addListener(async (message) => {
     const canvas = new OffscreenCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
-    // Background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, width, height);
-
     const boxWidth = x2 - x1;
     const boxHeight = y2 - y1;
 
+    // --- Fill ONLY the text bounding box ---
+    ctx.fillStyle = "#ffffff"; // Change if you want different box color
+    ctx.fillRect(x1, y1, boxWidth, boxHeight);
+
     ctx.fillStyle = "#000000";
 
-    // --- Function to wrap text into lines ---
+    // --- Function to wrap text ---
     function wrapText(context, text, maxWidth) {
       const words = text.split(" ");
       const lines = [];
-      let currentLine = words[0];
+      let currentLine = words[0] || "";
 
       for (let i = 1; i < words.length; i++) {
         const testLine = currentLine + " " + words[i];
@@ -36,7 +36,7 @@ browser.runtime.onMessage.addListener(async (message) => {
       return lines;
     }
 
-    // --- Auto-scale font size to fit box ---
+    // --- Auto-scale font ---
     let fontSize = boxHeight;
     let lines;
     let lineHeight;
@@ -55,11 +55,11 @@ browser.runtime.onMessage.addListener(async (message) => {
       fontSize--;
     }
 
-    // --- Center text vertically ---
+    // --- Center vertically ---
     const totalHeight = lines.length * lineHeight;
     let textY = y1 + (boxHeight - totalHeight) / 2 + fontSize;
 
-    // --- Draw each line centered ---
+    // --- Draw lines centered horizontally ---
     for (const line of lines) {
       const textWidth = ctx.measureText(line).width;
       const textX = x1 + (boxWidth - textWidth) / 2;
