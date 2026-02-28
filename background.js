@@ -1,5 +1,13 @@
 browser.runtime.onMessage.addListener(async (message) => {
   try {
+    // Check if this is an "openResult" message
+    if (message.action === "openResult") {
+      browser.tabs.create({
+        url: browser.runtime.getURL("Placeholders/Placeholder.png")
+      });
+      return;
+    }
+
     const { width, height, text, x1, y1, x2, y2 } = message;
 
     const canvas = new OffscreenCanvas(width, height);

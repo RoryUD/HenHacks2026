@@ -32,3 +32,9 @@ document.getElementById("create").addEventListener("click", async () => {
 
   window.close();
 });
+
+// New Tab event listener
+document.getElementById("openResult").addEventListener("click", async () => {
+  await browser.runtime.sendMessage({ action: "openResult" });
+  window.close()
+});

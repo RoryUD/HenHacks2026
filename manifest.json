@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "HenHacks 2026",
   "version": "1.0",
-  "permissions": ["downloads"],
+  "permissions": ["downloads", "tabs"],
   "description": "Translates / Enlarges Text",
   "icons": {
     "48": "icons/book.png"
