@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import PIL.Image
 from manga_ocr import MangaOcr
+import yaml
 
 # Import Comic Text Detector
 from inference import TextDetector
@@ -60,14 +61,19 @@ class MangaTextExtractor:
         for blk in blk_list:
             # blk.xyxy is in the format [xmin, ymin, xmax, ymax]
             xmin, ymin, xmax, ymax = map(int, blk.xyxy)
+            
+            # To avoid yaml tagging tuples as python/tuple, convert all tuples to lists
             formatted_boxes.append({
-                "position": (xmin, ymin, xmax, ymax),
-                "font_size": blk.font_size,
-                "lines": blk.lines_array().tolist(),
-                "angle": blk.angle,
-                "vertical": blk.vertical,
-                "fg_color": (blk.fg_r, blk.fg_g, blk.fg_b),
-                "bg_color": (blk.bg_r, blk.bg_g, blk.bg_b)
+                "position": [xmin, ymin, xmax, ymax],  # Bounding box coordinates [xmin, ymin, xmax, ymax]
+                "font_size": int(blk.font_size),       # Estimated font size
+                "lines": blk.lines_array().tolist(),   # Polygon coordinates for each text line
+                "angle": int(blk.angle),               # text orientation angle
+                "vertical": bool(blk.vertical),        # Vertical text flag
+                "fg_color": [int(blk.fg_r), int(blk.fg_g), int(blk.fg_b)], # Text color [R, G, B]
+                "bg_color": [int(blk.bg_r), int(blk.bg_g), int(blk.bg_b)], # Background color [R, G, B]
+                "line_spacing": int(blk.line_spacing), # Spacing between lines
+                "alignment": int(blk.alignment()),     # Text alignment (0: left, 1: center, 2: right)
+                "language": str(blk.language)          # Detected language (e.g., 'ja', 'eng')
             })
                 
         return formatted_boxes
@@ -91,7 +97,10 @@ class MangaTextExtractor:
                                 "angle": 0,
                                 "vertical": True,
                                 "fg_color": (0, 0, 0),
-                                "bg_color": (255, 255, 255)
+                                "bg_color": (255, 255, 255),
+                                "line_spacing": 1.0,
+                                "alignment": 1,
+                                "language": 'ja'
                             },
                             ...
                         ]
@@ -121,14 +130,17 @@ class MangaTextExtractor:
             # Save position information and text
             results.append({
                 "id": i,
-                "position": box,
-                "font_size": data["font_size"],
-                # "lines": data["lines"],
-                "angle": data["angle"],
-                "vertical": data["vertical"],
-                "fg_color": data["fg_color"],
-                "bg_color": data["bg_color"],
-                "text": text
+                "position": box, # Bounding box coordinates
+                "font_size": data["font_size"], # Estimated font size
+                "lines": data["lines"], # Polygon coordinates for each text line
+                "angle": data["angle"], # text orientation angle
+                "vertical": data["vertical"], # Vertical text flag (True/False)
+                "fg_color": data["fg_color"], # Text color (RGB)
+                "bg_color": data["bg_color"], # Background color (RGB)
+                "line_spacing": data["line_spacing"], # Spacing between lines
+                "alignment": data["alignment"], # Text alignment (0: left, 1: center, 2: right)
+                "language": data["language"], # Detected language (e.g., 'ja', 'eng')
+                "text": text # Recognized text content
             })
             
         return results
@@ -145,14 +157,16 @@ if __name__ == "__main__":
         # Extract text from the page
         page_data = extractor.extract(image_file)
         
-        # Check results
-        for i, data in enumerate(page_data):
-            print(f"【Bubble {i+1}】")
-            print(f"Position: {data['position']}")
-            print(f"Font Size: {data['font_size']}")
-            print(f"Vertical: {data['vertical']}")
-            print(f"Angle: {data['angle']}")
-            print(f"Text: {data['text']}\n")
+        # Check results and save to YAML
+        print("\n--- Extracted Data (YAML) ---")
+        yaml_output = yaml.dump(page_data, allow_unicode=True, default_flow_style=False, sort_keys=False)
+        print(yaml_output)
+        
+        # Save to file
+        output_yaml_path = Path(image_file).with_suffix('.yaml')
+        with open(output_yaml_path, 'w', encoding='utf-8') as f:
+            f.write(yaml_output)
+        print(f"Saved extracted data to {output_yaml_path}")
             
     except Exception as e:
         print(f"An error occurred: {e}")
