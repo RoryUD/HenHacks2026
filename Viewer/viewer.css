@@ -1,0 +1,59 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #1a1a1a;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+#viewer-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+#manga-page {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    user-select: none;
+}
+
+.arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 80px;
+    color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    user-select: none;
+    padding: 20px;
+    transition: color 0.2s;
+}
+
+.arrow:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+#left-arrow {
+    left: 20px;
+}
+
+#right-arrow {
+    right: 20px;
+}
+
+#page-info {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+}

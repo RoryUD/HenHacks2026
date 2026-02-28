@@ -3,7 +3,7 @@ browser.runtime.onMessage.addListener(async (message) => {
     // Check if this is an "openResult" message
     if (message.action === "openResult") {
       browser.tabs.create({
-        url: browser.runtime.getURL("Placeholders/Placeholder.png")
+        url: browser.runtime.getURL("Viewer/viewer.html")
       });
       return;
     }
