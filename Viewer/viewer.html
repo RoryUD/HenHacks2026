@@ -6,13 +6,28 @@
         <link rel="stylesheet" href="viewer.css">
     </head>
     <body>
-        <div id="viewer-container">
-            <img id="manga-page" src="" alt="Manga Page">
-            
-            <div id="left-arrow" class="arrow">&#8249;</div>
-            <div id="right-arrow" class="arrow">&#8250;</div>
+        <!-- Header Container -->
+        <div class="container" id="header">
+            <h1>Manga Text Extractor</h1>
+        </div>
 
-            <div id="page-info">Page <span id="current-page">1</span> / <span id="total-pages">3</span></div>
+        <!-- Toolbar Container -->
+        <div class="container" id="toolbar">
+            <button class="nav-btn" id="prev-btn">‹</button>
+            <button class="nav-btn" id="next-btn">›</button>
+
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+                <div id="progress-text">Progress: 33% (1/3)</div>
+            </div>
+
+            <button class="zoom-btn" id="zoom-out">🔍−</button>
+            <button class="zoom-btn" id="zoom-in">🔍+</button>
+        </div>
+
+        <!-- Image Container -->
+        <div class="container" id="image-container">
+            <img id="manga-page" src="" alt="Manga Page">
         </div>
 
         <script src="viewer.js"></script>
