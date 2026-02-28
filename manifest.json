@@ -6,12 +6,12 @@
   "description": "Translates / Enlarges Text",
 
   "icons": {
-    "48": "icons/border-48.png"
+    "48": "icons/book.png"
   },
 
   "content_scripts": [
     {
-      "matches": ["*://*.mozilla.org/*"],
+      "matches": ["<all_urls>"],
       "js": ["main.js"]
     }
   ]
