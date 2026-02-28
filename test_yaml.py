@@ -1,10 +1,15 @@
-from text_extracter import MangaTextExtractor
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
+import yaml
+import os
 
-extractor = MangaTextExtractor()
+# extraction is done via yaml file now
 image_path = "/Users/mizuho/HenHacks2026/image.png"
-results = extractor.extract(image_path)
+yaml_path = os.path.splitext(image_path)[0] + ".yaml"
+
+print(f"Loading metadata from {yaml_path}...")
+with open(yaml_path, "r", encoding="utf-8") as f:
+    results = yaml.safe_load(f)
 
 # Open original image
 img = Image.open(image_path).convert("RGB")
@@ -98,10 +103,14 @@ def fit_text(draw, text, box_width, box_height, font_path, is_vertical=False, es
             best_font = ImageFont.truetype(font_path, min_font_size)
         except:
             best_font = ImageFont.load_default()
+        
+        # Simple fallback (room for improvement here)
         if is_vertical:
             best_data = get_vertical_lines(draw, text, best_font, box_height)
         else:
             best_data = textwrap.fill(text, width=max(1, int(box_width*0.9/min_font_size)))
+        
+        return best_data, best_font
             
     return best_data, best_font
 
@@ -142,6 +151,7 @@ try:
 except IOError:
     font_path = "/System/Library/Fonts/PingFang.ttc" # Another candidate for Japanese font on Mac
 
+# If PingFang is also missing, fallback to default (handled within try-except)
 
 for item in results:
     print(f"ID: {item['id']}")
@@ -156,6 +166,7 @@ for item in results:
     height = ymax - ymin
     
     # Use detailed information obtained from TextBlock
+    # Since reading from YAML, get while checking if key exists
     is_vertical = item.get('vertical', height > width * 1.5)
     bg_color = item.get('bg_color', (0, 0, 0)) # Background color is filled with black (instead of mask processing)
     fg_color = item.get('fg_color', (255, 255, 255)) # Text color is white
@@ -163,12 +174,15 @@ for item in results:
     # Line spacing (line_spacing is 1.0 based magnification, pixel conversion is required, but used as coefficient simply here)
     # TextBlock's line_spacing is close to line spacing / character size ratio
     line_spacing_ratio = item.get('line_spacing', 1.0)
+    if line_spacing_ratio is None: line_spacing_ratio = 1.0
     
     # Text alignment (0: left, 1: center, 2: right) -> PIL is "left", "center", "right"
+    # Assumed to be saved as a number in YAML
+    align_val = item.get('alignment', 1)
     alignment_map = {0: "left", 1: "center", 2: "right"}
-    alignment = alignment_map.get(item.get('alignment', 1), "center")
+    alignment = alignment_map.get(align_val, "center")
 
-    # Convert if tuple is numpy array
+    # Convert if tuple is numpy array or list
     if not isinstance(bg_color, tuple):
         bg_color = tuple(map(int, bg_color)) if hasattr(bg_color, '__iter__') else (0,0,0)
 

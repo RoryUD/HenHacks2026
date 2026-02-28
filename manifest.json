@@ -2,11 +2,24 @@
   "manifest_version": 2,
   "name": "HenHacks 2026",
   "version": "1.0",
-  "permissions": ["downloads", "tabs"],
-  "description": "Translates / Enlarges Text",
+
+  "description": "Enlarges Text with High Resolution on Popular Manga Sites",
+  "permissions": [
+  	"downloads",
+	"https://cdn-ak-img.shonenjumpplus.com/*",
+	"activeTab"
+  ],
+
   "icons": {
     "48": "icons/book.png"
   },
+
+  "content_scripts": [
+    {
+      "matches": ["https://shonenjumpplus.com/episode/*"],
+      "js": ["download_pages.js"]
+    }
+  ],
 
   "background": {
     "scripts": ["background.js"]
@@ -15,5 +28,4 @@
     "default_title": "Create & Download Image",
     "default_popup": "popup.html"
   }
-
 }

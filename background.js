@@ -9,30 +9,19 @@ browser.runtime.onMessage.addListener(async (message) => {
     }
 
     const { width, height, text, x1, y1, x2, y2 } = message;
+    const { width, height, blocks } = message;
 
     const canvas = new OffscreenCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
-    // Background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, width, height);
-
-    const boxWidth = x2 - x1;
-    const boxHeight = y2 - y1;
-
-    ctx.fillStyle = "#000000";
-
-    // --- Function to wrap text into lines ---
     function wrapText(context, text, maxWidth) {
       const words = text.split(" ");
       const lines = [];
-      let currentLine = words[0];
+      let currentLine = words[0] || "";
 
       for (let i = 1; i < words.length; i++) {
         const testLine = currentLine + " " + words[i];
-        const metrics = context.measureText(testLine);
-
-        if (metrics.width > maxWidth) {
+        if (context.measureText(testLine).width > maxWidth) {
           lines.push(currentLine);
           currentLine = words[i];
         } else {
@@ -44,35 +33,40 @@ browser.runtime.onMessage.addListener(async (message) => {
       return lines;
     }
 
-    // --- Auto-scale font size to fit box ---
-    let fontSize = boxHeight;
-    let lines;
-    let lineHeight;
+    for (const block of blocks) {
+      const { text, x1, y1, x2, y2 } = block;
 
-    while (fontSize > 5) {
-      ctx.font = `${fontSize}px Arial`;
-      lines = wrapText(ctx, text, boxWidth);
-      lineHeight = fontSize * 1.2;
+      const boxWidth = x2 - x1;
+      const boxHeight = y2 - y1;
 
-      const totalTextHeight = lines.length * lineHeight;
+      // Fill block background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x1, y1, boxWidth, boxHeight);
 
-      if (totalTextHeight <= boxHeight) {
-        break;
+      ctx.fillStyle = "#000000";
+
+      let fontSize = boxHeight;
+      let lines;
+      let lineHeight;
+
+      while (fontSize > 5) {
+        ctx.font = `${fontSize}px Arial`;
+        lines = wrapText(ctx, text, boxWidth);
+        lineHeight = fontSize * 1.2;
+
+        if (lines.length * lineHeight <= boxHeight) break;
+        fontSize--;
       }
 
-      fontSize--;
-    }
+      const totalHeight = lines.length * lineHeight;
+      let textY = y1 + (boxHeight - totalHeight) / 2 + fontSize;
 
-    // --- Center text vertically ---
-    const totalHeight = lines.length * lineHeight;
-    let textY = y1 + (boxHeight - totalHeight) / 2 + fontSize;
-
-    // --- Draw each line centered ---
-    for (const line of lines) {
-      const textWidth = ctx.measureText(line).width;
-      const textX = x1 + (boxWidth - textWidth) / 2;
-      ctx.fillText(line, textX, textY);
-      textY += lineHeight;
+      for (const line of lines) {
+        const textWidth = ctx.measureText(line).width;
+        const textX = x1 + (boxWidth - textWidth) / 2;
+        ctx.fillText(line, textX, textY);
+        textY += lineHeight;
+      }
     }
 
     const blob = await canvas.convertToBlob({ type: "image/png" });
@@ -80,7 +74,7 @@ browser.runtime.onMessage.addListener(async (message) => {
 
     await browser.downloads.download({
       url,
-      filename: `BlankWithText_${width}x${height}.png`,
+      filename: `MultiBlock_${width}x${height}.png`,
       saveAs: false
     });
 

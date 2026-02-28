@@ -2,23 +2,27 @@
 <html>
 <body>
   <h3>Image Size</h3>
-  <label>Width: <input id="width" type="number" value="800"></label><br>
-  <label>Height: <input id="height" type="number" value="600"></label><br>
+  <label>Width: <input id="width" type="number" value="1650"></label><br>
+  <label>Height: <input id="height" type="number" value="2325"></label><br>
 
-  <h3>Text to Display</h3>
-  <label>Text:
-    <input id="text" type="text" value="Hello from Firefox Extension!" size="40">
-  </label><br>
+  <h3>Number of Text Blocks</h3>
+  <select id="blockCount">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+  </select>
 
-  <h3>Text Area (Bounding Box)</h3>
-  <label>Top Left X: <input id="x1" type="number" value="100"></label><br>
-  <label>Top Left Y: <input id="y1" type="number" value="200"></label><br>
-  <label>Bottom Right X: <input id="x2" type="number" value="700"></label><br>
-  <label>Bottom Right Y: <input id="y2" type="number" value="400"></label><br>
+  <div id="blocksContainer"></div>
 
+  <br>
   <button id="create">Create Image</button>
-  <button id="openResult">Open Result in New Tab</button>
-
+  <br>
+  <h3>Enlargen Number of Pages! (0 for all)</h3>
+  <label>Number of Pages: <input id="pages" type="number" value="1"></label><br>
+  <button id="dw-pages">Enlarge!</button>
   <script src="popup.js"></script>
+  <script src="download_pages.js"></script>
 </body>
 </html>
