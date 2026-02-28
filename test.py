@@ -6,22 +6,22 @@ extractor = MangaTextExtractor()
 image_path = "/Users/mizuho/HenHacks2026/image.png"
 results = extractor.extract(image_path)
 
-# 元画像を開く
+# Open original image
 img = Image.open(image_path).convert("RGB")
 draw = ImageDraw.Draw(img)
 
 def get_vertical_lines(draw, text, font, box_height):
-    """縦書き用にテキストを指定された高さで分割してリスト化する"""
+    """Split text into a list for vertical writing at the specified height"""
     lines = []
     current_line = ""
     current_h = 0
-    char_spacing = int(font.size * 0.2) # 縦書きの文字間：少し空ける (10%)
+    char_spacing = int(font.size * 0.2) # Vertical character spacing: leave a little space (10%)
     
     for char in text:
         bbox = draw.textbbox((0, 0), char, font=font)
         char_h = bbox[3] - bbox[1]
         
-        # 枠の高さを超える場合は次の列へ
+        # Move to the next column if the height of the frame is exceeded
         if current_h + char_h + char_spacing > box_height and current_line:
             lines.append(current_line)
             current_line = char
@@ -35,19 +35,19 @@ def get_vertical_lines(draw, text, font, box_height):
     return lines
 
 def fit_text(draw, text, box_width, box_height, font_path, is_vertical=False, estimated_font_size=None):
-    """指定された枠に収まるようにテキストのフォントサイズと折り返しを調整する"""
+    """Adjust text font size and wrapping to fit within the specified frame"""
     min_font_size = 10
     max_font_size = 100
     
-    # 推定フォントサイズがあれば、そこから探索を開始する (精度向上と高速化)
+    # If there is an estimated font size, start searching from there (improves accuracy and speed)
     if estimated_font_size and estimated_font_size > min_font_size:
-        start_font_size = int(estimated_font_size * 1.5) # 推定値より少し大きめからスタート
+        start_font_size = int(estimated_font_size * 1.5) # Start a little larger than the estimated value
         start_font_size = min(start_font_size, max_font_size)
     else:
         start_font_size = max_font_size
 
     best_font = None
-    best_data = None # 横書きは文字列、縦書きは列のリストを入れる
+    best_data = None # Horizontal writing contains a string, vertical writing contains a list of columns
 
     for font_size in range(start_font_size, min_font_size - 1, -2):
         try:
@@ -58,24 +58,24 @@ def fit_text(draw, text, box_width, box_height, font_path, is_vertical=False, es
             break
 
         if is_vertical:
-            # 縦書き：高さを基準にテキストを列に分割
+            # Vertical writing: Split text into columns based on height
             lines = get_vertical_lines(draw, text, font, box_height)
             
-            # フォントの平均的な幅を取得
+            # Get average font width
             bbox_a = draw.textbbox((0, 0), "あ", font=font)
             char_width = bbox_a[2] - bbox_a[0]
-            line_spacing = int(font_size * 0.2) # 行間はフォントサイズの20%程度
+            line_spacing = int(font_size * 0.2) # Line spacing is about 20% of font size
             
-            # 全体の幅を計算 (列数 * (文字幅 + 行間))
+            # Calculate total width (number of columns * (character width + line spacing))
             total_width = len(lines) * char_width + max(0, len(lines) - 1) * line_spacing
             
-            # 全体の幅が枠に収まるかチェック
+            # Check if total width fits within the frame
             if total_width <= box_width:
                 best_font = font
                 best_data = lines
                 break
         else:
-            # 横書き：幅に合わせて折り返しを計算
+            # Horizontal writing: Calculate wrapping according to width
             target_width = box_width * 0.95
             avg_char_width = font_size
             if avg_char_width <= 0: continue
@@ -92,7 +92,7 @@ def fit_text(draw, text, box_width, box_height, font_path, is_vertical=False, es
                 best_data = wrapped_text
                 break
     
-    # 最小サイズでも収まらなかった場合のフォールバック
+    # Fallback if it doesn't fit even at minimum size
     if best_font is None:
         try:
             best_font = ImageFont.truetype(font_path, min_font_size)
@@ -106,41 +106,41 @@ def fit_text(draw, text, box_width, box_height, font_path, is_vertical=False, es
     return best_data, best_font
 
 def draw_vertical_text_rtl(draw, lines, font, box_x, box_y, box_width, box_height, text_color="white", line_spacing=4):
-    """複数行の縦書きテキストを右から左へ描画する（中央揃え対応）"""
+    """Draw multiple lines of vertical text from right to left (supports centering)"""
     bbox_a = draw.textbbox((0, 0), "あ", font=font)
     char_width = bbox_a[2] - bbox_a[0]
-    char_spacing = int(font.size * 0.1) # 描画時の文字間隔
+    char_spacing = int(font.size * 0.1) # Character spacing when drawing
     
-    # テキストブロック全体の幅を計算
+    # Calculate the width of the entire text block
     total_width = len(lines) * char_width + max(0, len(lines) - 1) * line_spacing
     
-    # 最初の列のX座標（枠の中央に配置しつつ、一番右の列の開始位置を計算）
+    # X coordinate of the first column (place in the center of the frame and calculate the start position of the rightmost column)
     start_x = box_x + box_width / 2 + total_width / 2 - char_width
     
     for i, line in enumerate(lines):
-        # 列が進むごとに左へずらす
+        # Shift to the left as the column progresses
         current_x = start_x - i * (char_width + line_spacing)
         
-        # この列の全体の高さを計算して、縦方向の中央揃え開始位置を決める
+        # Calculate the total height of this column and determine the vertical centering start position
         line_height = sum([draw.textbbox((0, 0), c, font=font)[3] - draw.textbbox((0, 0), c, font=font)[1] + char_spacing for c in line])
-        line_height -= char_spacing # 最後の文字の後ろのスペースはカウントしない
+        line_height -= char_spacing # Do not count the space after the last character
         current_y = box_y + box_height / 2 - line_height / 2
         
-        # 1文字ずつ縦に描画
+        # Draw one character at a time vertically
         for char in line:
             draw.text((current_x, current_y), char, font=font, fill=text_color)
             bbox = draw.textbbox((0, 0), char, font=font)
             current_y += (bbox[3] - bbox[1]) + char_spacing
 
 # ----------------------------------------
-# メイン処理
+# Main Process
 # ----------------------------------------
 font_path = "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc"
-# もし上記のフォントがない場合はデフォルトを使用
+# If the above font does not exist, use the default
 try:
     ImageFont.truetype(font_path, 20)
 except IOError:
-    font_path = "/System/Library/Fonts/PingFang.ttc" # Macの別の日本語フォント候補
+    font_path = "/System/Library/Fonts/PingFang.ttc" # Another candidate for Japanese font on Mac
 
 
 for item in results:
@@ -155,44 +155,44 @@ for item in results:
     width = xmax - xmin
     height = ymax - ymin
     
-    # TextBlockから取得した詳細情報を使用
+    # Use detailed information obtained from TextBlock
     is_vertical = item.get('vertical', height > width * 1.5)
-    bg_color = item.get('bg_color', (0, 0, 0)) # 背景色は黒で塗りつぶす (マスク処理の代わり)
-    fg_color = item.get('fg_color', (255, 255, 255)) # 文字色は白
+    bg_color = item.get('bg_color', (0, 0, 0)) # Background color is filled with black (instead of mask processing)
+    fg_color = item.get('fg_color', (255, 255, 255)) # Text color is white
     
-    # 行間 (line_spacingは1.0が基準倍率なので、ピクセル換算が必要だが、ここでは簡易的に係数として使う)
-    # TextBlockのline_spacingは行間隔/文字サイズの比率に近い
+    # Line spacing (line_spacing is 1.0 based magnification, pixel conversion is required, but used as coefficient simply here)
+    # TextBlock's line_spacing is close to line spacing / character size ratio
     line_spacing_ratio = item.get('line_spacing', 1.0)
     
-    # 文字寄せ (0:左, 1:中, 2:右) -> PILは "left", "center", "right"
+    # Text alignment (0: left, 1: center, 2: right) -> PIL is "left", "center", "right"
     alignment_map = {0: "left", 1: "center", 2: "right"}
     alignment = alignment_map.get(item.get('alignment', 1), "center")
 
-    # タプルがnumpy配列の場合があるので変換
+    # Convert if tuple is numpy array
     if not isinstance(bg_color, tuple):
         bg_color = tuple(map(int, bg_color)) if hasattr(bg_color, '__iter__') else (0,0,0)
 
-    # 元の枠を黒で塗りつぶす (本来はインペイントで消すべきだが、ここでは黒塗り)
-    # 背景色が白に近い場合は白で、それ以外は黒で塗りつぶす簡易ロジック
+    # Fill original frame with black (Should be removed by inpainting originally, but black filled here)
+    # Simple logic to fill with white if background color is close to white, otherwise black
     fill_color = "white" if sum(bg_color) > 600 else "black"
     text_color = "black" if fill_color == "white" else "white"
     
     draw.rectangle([xmin, ymin, xmax, ymax], fill=fill_color)
 
-    # 最適なフォントサイズと配置データを取得
-    # 推定フォントサイズを渡す
+    # Get optimal font size and layout data
+    # Pass estimated font size
     estimated_size = item.get('font_size', -1)
     best_data, custom_font = fit_text(draw, text, width, height, font_path, is_vertical, estimated_font_size=estimated_size)
     
-    # 決定したフォントサイズを取得
+    # Get determined font size
     current_font_size = custom_font.size
-    pixel_spacing = int(current_font_size * line_spacing_ratio * 0.2) # 少し控えめに行間を設定
+    pixel_spacing = int(current_font_size * line_spacing_ratio * 0.2) # Set line spacing a little modestly
 
     if is_vertical:
-        # 縦書きの場合（best_dataは列のリスト）
+        # Vertical writing (best_data is a list of columns)
         draw_vertical_text_rtl(draw, best_data, custom_font, xmin, ymin, width, height, text_color=text_color, line_spacing=pixel_spacing)
     else:
-        # 横書きの場合（best_dataは改行済みの文字列）
+        # Horizontal writing (best_data is a string with line breaks)
         bbox = draw.multiline_textbbox((0, 0), best_data, font=custom_font, spacing=pixel_spacing)
         text_w = bbox[2] - bbox[0]
         text_h = bbox[3] - bbox[1]
@@ -209,7 +209,7 @@ for item in results:
             spacing=pixel_spacing
         )
 
-# 画像を保存
+# Save image
 output_path = "/Users/mizuho/HenHacks2026/annotated_image.png"
 img.save(output_path)
 print(f"Saved annotated image to {output_path}")
