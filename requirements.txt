@@ -146,3 +146,5 @@ wikipedia==1.4.0
 xxhash==3.6.0
 yarl==1.22.0
 yattag==1.16.1
+python-dotenv
+google-generativeai

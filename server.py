@@ -8,6 +8,13 @@ import numpy as np
 import PIL.Image
 import io
 
+# Import Google GenAI and load_dotenv
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load environment variables from config.env
+load_dotenv('config.env')
+
 # Add comic-text-detector folder to path to allow import
 sys.path.append(str(Path(__file__).parent / "comic-text-detector"))
 from manga_ocr import MangaOcr
@@ -16,6 +23,13 @@ from inference import TextDetector
 
 app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests from the browser extension
+
+# Configure Gemini API
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
+else:
+    print("WARNING: GOOGLE_API_KEY not found in config.env. Translation will be disabled.")
 
 class MangaTextExtractor:
     def __init__(self, detector_model_path=None, device='cpu'):
@@ -38,6 +52,32 @@ class MangaTextExtractor:
         # Initialization of TextDetector
         self.text_detector = TextDetector(model_path=detector_model_path, input_size=1024, device=device, act='leaky')
         print("Models loaded successfully.")
+        
+        # Initialize Gemini Model
+        if GOOGLE_API_KEY:
+            self.translation_model = genai.GenerativeModel('gemini-pro')
+        else:
+            self.translation_model = None
+
+    def translate_text(self, text):
+        """
+        Translates Japanese text to English using Gemini.
+        """
+        if not self.translation_model:
+            # return "[Translation Disabled: No API Key]"
+            return "[Translation Skipped]"
+        
+            
+        if not text or text.strip() == "":
+            return ""
+        
+        try:
+            prompt = f"Translate the following Japanese manga text to English. Output only the translation:\n\n{text}"
+            response = self.translation_model.generate_content(prompt)
+            return response.text.strip()
+        except Exception as e:
+            print(f"Translation error: {e}")
+            return "[Translation Failed]"
 
     def _get_boxes_from_detector(self, img_array):
         """
@@ -101,6 +141,11 @@ class MangaTextExtractor:
             
             data["id"] = i
             data["text"] = text
+            
+            # Translate Logic
+            print(f"Translating: {text}...")
+            data["english"] = self.translate_text(text)
+
             results.append(data)
             
         return results

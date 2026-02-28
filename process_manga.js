@@ -110,7 +110,7 @@ async function processAllPages(limit) {
 
                 // If text found, log it nicely
                 if (result.data.results && result.data.results.length > 0) {
-                     const texts = result.data.results.map(r => r.text).join("\n");
+                     const texts = result.data.results.map(r => `JP: ${r.text}\nEN: ${r.english}`).join("\n---\n");
                      console.log(`%c[Page ${pageNum} Found Text]:\n${texts}`, "color: blue; font-weight: bold; font-size: 14px;");
                 } else {
                     console.warn(`[process_manga]No text found on page ${pageNum}. (Maybe just artwork?)`);
