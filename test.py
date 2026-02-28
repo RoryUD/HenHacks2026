@@ -1,7 +1,7 @@
 from text_extracter import MangaTextExtractor
 
 extractor = MangaTextExtractor()
-results = extractor.extract("/Users/mizuho/HenHacks2026/image.png")
+results = extractor.extract("image.png")
 
 for item in results:
     print(f"ID: {item['id']}")
