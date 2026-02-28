@@ -2,6 +2,7 @@
 
 Our submission to the Community Wellness & Social Connections category!
 
+## Overview
 This project extracts text from manga images using `comic-text-detector` for speech bubble detection and `manga-ocr` for Optical Character Recognition (OCR).
 
 ## Prerequisites
