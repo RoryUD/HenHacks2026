@@ -1,5 +1,14 @@
 browser.runtime.onMessage.addListener(async (message) => {
   try {
+    // Check if this is an "openResult" message
+    if (message.action === "openResult") {
+      browser.tabs.create({
+        url: browser.runtime.getURL("Viewer/viewer.html")
+      });
+      return;
+    }
+
+    const { width, height, text, x1, y1, x2, y2 } = message;
     const { width, height, blocks } = message;
 
     const canvas = new OffscreenCanvas(width, height);
