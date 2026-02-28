@@ -1,10 +1,15 @@
-from text_extracter import MangaTextExtractor
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
+import yaml
+import os
 
-extractor = MangaTextExtractor()
+# extraction is done via yaml file now
 image_path = "/Users/mizuho/HenHacks2026/image.png"
-results = extractor.extract(image_path)
+yaml_path = os.path.splitext(image_path)[0] + ".yaml"
+
+print(f"Loading metadata from {yaml_path}...")
+with open(yaml_path, "r", encoding="utf-8") as f:
+    results = yaml.safe_load(f)
 
 # 元画像を開く
 img = Image.open(image_path).convert("RGB")
@@ -98,10 +103,14 @@ def fit_text(draw, text, box_width, box_height, font_path, is_vertical=False, es
             best_font = ImageFont.truetype(font_path, min_font_size)
         except:
             best_font = ImageFont.load_default()
+        
+        # 簡易的なフォールバック（ここは改善の余地あり）
         if is_vertical:
             best_data = get_vertical_lines(draw, text, best_font, box_height)
         else:
             best_data = textwrap.fill(text, width=max(1, int(box_width*0.9/min_font_size)))
+        
+        return best_data, best_font
             
     return best_data, best_font
 
@@ -142,6 +151,7 @@ try:
 except IOError:
     font_path = "/System/Library/Fonts/PingFang.ttc" # Macの別の日本語フォント候補
 
+# もしPingFangもなければデフォルトにフォールバック（try-except内で処理）
 
 for item in results:
     print(f"ID: {item['id']}")
@@ -156,6 +166,7 @@ for item in results:
     height = ymax - ymin
     
     # TextBlockから取得した詳細情報を使用
+    # YAMLから読み込むため、キーが存在するか確認しつつ取得
     is_vertical = item.get('vertical', height > width * 1.5)
     bg_color = item.get('bg_color', (0, 0, 0)) # 背景色は黒で塗りつぶす (マスク処理の代わり)
     fg_color = item.get('fg_color', (255, 255, 255)) # 文字色は白
@@ -163,12 +174,15 @@ for item in results:
     # 行間 (line_spacingは1.0が基準倍率なので、ピクセル換算が必要だが、ここでは簡易的に係数として使う)
     # TextBlockのline_spacingは行間隔/文字サイズの比率に近い
     line_spacing_ratio = item.get('line_spacing', 1.0)
+    if line_spacing_ratio is None: line_spacing_ratio = 1.0
     
     # 文字寄せ (0:左, 1:中, 2:右) -> PILは "left", "center", "right"
+    # YAMLでは数値で保存されている想定
+    align_val = item.get('alignment', 1)
     alignment_map = {0: "left", 1: "center", 2: "right"}
-    alignment = alignment_map.get(item.get('alignment', 1), "center")
+    alignment = alignment_map.get(align_val, "center")
 
-    # タプルがnumpy配列の場合があるので変換
+    # タプルがnumpy配列やリストの場合があるので変換
     if not isinstance(bg_color, tuple):
         bg_color = tuple(map(int, bg_color)) if hasattr(bg_color, '__iter__') else (0,0,0)
 
