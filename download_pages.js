@@ -1,5 +1,4 @@
-async function downloadAllShonenPages(limit) {
-
+async function downloadShonenJumpPages(limit) {
 	const DIVIDE_NUM = 4;
 	console.log(`Starting download for all pages using DIVIDE_NUM = ${DIVIDE_NUM}...`);
 
@@ -89,3 +88,16 @@ async function downloadAllShonenPages(limit) {
 
 	console.log("Finished downloading all pages.");
 }
+
+browser.runtime.onMessage.addListener((message) => {
+    if (message.action === "START_DOWNLOAD") {
+        console.log("Message received from popup! Starting...");
+
+        // Call your function (limit 0 = all pages)
+        downloadShonenJumpPages(message.limit || 0)
+            .catch(err => console.error("Download failed:", err));
+
+        // Optional: Send a response back to the popup
+        return Promise.resolve({ status: "started" });
+    }
+});
