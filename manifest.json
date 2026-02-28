@@ -4,7 +4,9 @@
   "version": "1.0",
 
   "description": "Translates / Enlarges Text",
-
+  "permissions": [
+  	"downloads"
+  ],
   "icons": {
     "48": "icons/book.png"
   },
