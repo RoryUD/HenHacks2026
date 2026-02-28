@@ -70,6 +70,37 @@ This project extracts text from manga images using `comic-text-detector` for spe
     - Navigate to a supported Manga viewer page.
     - The extension will automatically descramble pages and send them to this server for text extraction.
 
+3.  **Handle Extraction Results:**
+    The extension emits a custom event `MangaTextDetected` when text is found. You can listen for this event in a content script (like `display_results.js`) to process the data:
+
+    ```javascript
+    // display_results.js
+    // Handles displaying the translation results on the screen
+
+    console.log("[display]Translation Display Module Loaded.");
+
+    document.addEventListener("MangaTextDetected", (e) => {
+        const data = e.detail;
+        console.log(`[display]Page ${data.pageNum}`, "color: magenta; font-weight: bold;");
+        console.log("[display]Original Image Size:", data.pageWidth, "x", data.pageHeight);
+        
+        if (data.results && data.results.length > 0) {
+            data.results.forEach((item, index) => {
+                console.log(`[Text Block ${index + 1}]`);
+                console.log(`  Content:  ${item.text}`);
+                console.log(`  Position: [Left:${item.position[0]}, Top:${item.position[1]}, Right:${item.position[2]}, Bottom:${item.position[3]}]`);
+                console.log(`  Size:     ${item.font_size}`);
+                console.log(`  Vertical: ${item.vertical}`);
+                console.log('-----------------------------');
+            });
+        } else {
+            console.log("[display] No text detected on this page.");
+        }
+
+        // Placeholder for UI rendering logic
+        // renderTranslationOverlay(data);
+    });
+    ```
 
 ## Credits
 
