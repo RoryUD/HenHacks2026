@@ -1,3 +1,3 @@
 //main script
 
-document.body.style.border = "5px solid red";
+downloadAllShonenPages(4).then(() => console.log("Done!"));
