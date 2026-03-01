@@ -1,10 +1,5 @@
-// Array of placeholder images (later will come from backend)
-const pages = [
-    "Placeholders/page1.png",
-    "Placeholders/page2.png",
-    "Placeholders/page3.png"
-];
-
+// Will be populated from browser storage
+let pages = [];
 let currentPage = 0;
 let zoomLevel = 1;
 
@@ -18,13 +13,34 @@ const zoomInBtn = document.getElementById("zoom-in");
 const zoomOutBtn = document.getElementById("zoom-out");
 
 // Initialize viewer
-function init() {
+async function init() {
+    // Load processed manga pages from browser storage
+    const result = await browser.storage.local.get("mangaPages");
+
+    if (result.mangaPages && result.mangaPages.length > 0) {
+        pages = result.mangaPages;
+        console.log(`Loaded ${pages.length} pages from storage`);
+    } else {
+        // Fallback to placeholders if no stored pages
+        pages = [
+            browser.runtime.getURL("Placeholders/page1.png"),
+            browser.runtime.getURL("Placeholders/page2.png"),
+            browser.runtime.getURL("Placeholders/page3.png")
+        ];
+        console.log("No stored pages found, using placeholders");
+    }
+
     showPage(currentPage);
 }
 
 // Display the current page
 function showPage(index) {
-    imgElement.src = browser.runtime.getURL(pages[index]);
+    // If it's a data URL, use directly; if it's a path, get extension URL
+    if (pages[index].startsWith('data:')) {
+        imgElement.src = pages[index];
+    } else {
+        imgElement.src = browser.runtime.getURL(pages[index]);
+    }
     updateProgressBar();
 }
 

@@ -51,7 +51,7 @@ modal.addEventListener("click", (e) => {
 });
 
 // Handle "Enlarge" button click
-enlargeBtn.addEventListener("click", () => {
+enlargeBtn.addEventListener("click", async () => {
     const numPages = parseInt(numPagesInput.value, 10);
 
     if (!numPages || numPages < 1 || numPages > 100) {
@@ -59,12 +59,37 @@ enlargeBtn.addEventListener("click", () => {
       return;
     }
 
-    // Send message to background script to open viewer
-    browser.runtime.sendMessage({
-      action: "openResult",
-      numPages: numPages
-    });
+    // Show loading state
+    enlargeBtn.textContent = `Processing ${numPages} pages...`;
+    enlargeBtn.disabled = true;
 
-    // Close modal
-    modalOverlay.classList.remove("show");
+    try {
+        // Start download with user's page limit
+        const response = await browser.runtime.sendMessage({
+            action: "START_DOWNLOAD",
+            limit: numPages
+        });
+
+        if (response && response.status === "complete") {
+            console.log(`Downloaded ${response.count} pages`);
+
+            // Open viewer
+            await browser.runtime.sendMessage({
+            action: "openResult",
+            numPages: response.count
+            });
+
+            // Close modal
+            modalOverlay.classList.remove("show");
+        } else {
+            alert("Download failed. Please try again.");
+        }
+    } catch (err) {
+        console.error("Error:", err);
+        alert("An error occurred. Check console for details.");
+    } finally {
+        // Reset button
+        enlargeBtn.textContent = "Enlarge";
+        enlargeBtn.disabled = false;
+    }
 });
