@@ -83,12 +83,19 @@ async function downloadShonenJumpPages(limit) {
 			// await new Promise(r => setTimeout(r, 300));
 
 			// Step 3: Store data URL in array
-			const dataUrl = canvas.toDataURL("image/png");
-			imageDataUrls.push(dataUrl);
-			console.log(`Stored page ${pageNum} in memory`);
+  			const dataUrl = canvas.toDataURL("image/png");
+  			imageDataUrls.push(dataUrl);
+  			console.log(`Stored page ${pageNum} in memory`);
 
-			// Step 4: Small delay between processing
-			await new Promise(r => setTimeout(r, 100));
+  			// Send progress update
+  			browser.runtime.sendMessage({
+    			action: "DOWNLOAD_PROGRESS",
+    			current: index + 1,
+    			total: actualLimit
+  			});
+
+  			// Step 4: Small delay between processing
+  			await new Promise(r => setTimeout(r, 100));
 
 		} catch (err) {
 			console.error(`Error on page ${pageNum}:`, err);

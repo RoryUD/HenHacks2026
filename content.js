@@ -9,21 +9,25 @@ const modalOverlay = document.createElement("div");
 modalOverlay.id = "manga-modal-overlay";
 modalOverlay.innerHTML = `
     <div id="manga-modal">
-      <!-- Title Container -->
-      <div class="modal-container" id="modal-title-container">
-        <h1>Manga Text Extractor</h1>
-      </div>
+        <!-- Title Container -->
+        <div class="modal-container" id="modal-title-container">
+            <h1>Manga Text Extractor</h1>
+        </div>
 
-      <!-- Settings Container -->
-      <div class="modal-container" id="modal-settings-container">
-        <label for="modal-num-pages">Number of Pages:</label>
-        <input type="number" id="modal-num-pages" value="3" min="1" max="100">
-      </div>
+        <!-- Settings Container -->
+        <div class="modal-container" id="modal-settings-container">
+            <label for="modal-num-pages">Number of Pages:</label>
+            <input type="number" id="modal-num-pages" value="3" min="1" max="100">
+        </div>
 
-      <!-- Action Container -->
-      <div class="modal-container" id="modal-action-container">
-        <button id="modal-enlarge-btn">Enlarge</button>
-      </div>
+        <!-- Action Container -->
+        <div class="modal-container" id="modal-action-container">
+            <div id="enlarge-btn-wrapper">
+                <div id="enlarge-progress-bar"></div>
+                <div id="enlarge-progress-text"></div>
+                <button id="modal-enlarge-btn">Enlarge</button>
+            </div>
+        </div>
     </div>
 `;
 document.body.appendChild(modalOverlay);
@@ -32,6 +36,8 @@ document.body.appendChild(modalOverlay);
 const modal = document.getElementById("manga-modal");
 const numPagesInput = document.getElementById("modal-num-pages");
 const enlargeBtn = document.getElementById("modal-enlarge-btn");
+const enlargeProgressBar = document.getElementById("enlarge-progress-bar");
+const enlargeProgressText = document.getElementById("enlarge-progress-text");
 
 // Show modal when floating button is clicked
 floatingBtn.addEventListener("click", () => {
@@ -59,9 +65,10 @@ enlargeBtn.addEventListener("click", async () => {
       return;
     }
 
-    // Show loading state
-    enlargeBtn.textContent = `Processing ${numPages} pages...`;
-    enlargeBtn.disabled = true;
+    // Hide button, show progress bar
+    enlargeBtn.style.display = "none";
+    enlargeProgressText.style.display = "flex";
+    enlargeProgressText.textContent = `Processing 0/${numPages}...`;
 
     try {
         // Start download with user's page limit
@@ -88,8 +95,21 @@ enlargeBtn.addEventListener("click", async () => {
         console.error("Error:", err);
         alert("An error occurred. Check console for details.");
     } finally {
-        // Reset button
-        enlargeBtn.textContent = "Enlarge";
+        // Reset: show button, hide progress
+        enlargeBtn.style.display = "block";
         enlargeBtn.disabled = false;
+        enlargeProgressText.style.display = "none";
+        enlargeProgressBar.style.width = "0%";
+    }
+});
+
+// Listen for download progress updates
+browser.runtime.onMessage.addListener((message) => {
+    console.log("Message received in content.js:", message);
+    if (message.action === "DOWNLOAD_PROGRESS") {
+        const percent = (message.current / message.total) * 100;
+        console.log(`Progress update: ${message.current}/${message.total} = ${percent}%`);
+        enlargeProgressText.textContent = `Processing ${message.current}/${message.total}...`;
+        enlargeProgressBar.style.width = `${percent}%`;
     }
 });
