@@ -58,6 +58,9 @@ enlargeBtn.addEventListener("click", () => {
       alert("Please enter a valid number of pages (1-100).");
       return;
     }
+    
+    // Call the correct function from download_pages.js
+    downloadShonenJumpPages(numPages);
 
     // Send message to background script to open viewer
     browser.runtime.sendMessage({

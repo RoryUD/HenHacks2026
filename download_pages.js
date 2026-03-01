@@ -14,7 +14,8 @@ async function downloadShonenJumpPages(limit) {
 
 	console.log(`Found ${mainPages.length} pages to download.`);
 	const actualLimit = (limit === 0 || !limit) ? mainPages.length : limit;
-	// 2. Loop through pages sequentially (using for...of to allow await)
+
+	// 2. Loop through pages sequentially
 	for (let index = 0; index < actualLimit; index++) {
 		const page = mainPages[index];
 		const pageNum = (index + 1).toString().padStart(3, '0'); // Format: 001, 002...
@@ -30,11 +31,11 @@ async function downloadShonenJumpPages(limit) {
 			// Load Scrambled Image
 			const img = new Image();
 			const imageLoaded = new Promise((res, rej) => {
-    			img.onload = () => {
-        			URL.revokeObjectURL(objectURL); // Clean up memory
-        			res();
-    			};
-    			img.onerror = rej;
+				img.onload = () => {
+					URL.revokeObjectURL(objectURL);
+					res();
+				};
+				img.onerror = rej;
 			});
 
 			img.src = objectURL;
@@ -51,20 +52,17 @@ async function downloadShonenJumpPages(limit) {
 			const cell_width = Math.floor(page.width / (DIVIDE_NUM * 8)) * 8;
 			const cell_height = Math.floor(page.height / (DIVIDE_NUM * 8)) * 8;
 
-			// Step 1: Initial draw to handle edges (from site's solve() logic)
+			// Step 1: Initial draw to handle edges
 			ctx.drawImage(img, 0, 0, page.width, page.height, 0, 0, page.width, page.height);
 
 			// Step 2: Loop through the grid (DIVIDE_NUM x DIVIDE_NUM)
 			for (let e = 0; e < DIVIDE_NUM * DIVIDE_NUM; e++) {
-				// Source coordinates (i, t)
 				const t = Math.floor(e / DIVIDE_NUM) * cell_height;
 				const i = (e % DIVIDE_NUM) * cell_width;
 
-				// The Permutation Math
 				const r = Math.floor(e / DIVIDE_NUM);
 				const n = (e % DIVIDE_NUM) * DIVIDE_NUM + r;
 
-				// Destination coordinates (s, o)
 				const s = (n % DIVIDE_NUM) * cell_width;
 				const o = Math.floor(n / DIVIDE_NUM) * cell_height;
 
@@ -78,7 +76,7 @@ async function downloadShonenJumpPages(limit) {
 			link.href = dataUrl;
 			link.click();
 
-			// Step 4: Small delay to prevent browser download congestion
+			// Step 4: Small delay
 			await new Promise(r => setTimeout(r, 300));
 
 		} catch (err) {
@@ -87,17 +85,28 @@ async function downloadShonenJumpPages(limit) {
 	}
 
 	console.log("Finished downloading all pages.");
+
+	// Step 5: ダウンロード完了後にサーバーへシグナル送信
+	try {
+		const serverRes = await fetch("http://localhost:5001/run", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ num_pages: actualLimit })
+		});
+		const result = await serverRes.json();
+		console.log("Server processing started:", result);
+	} catch (err) {
+		console.error("Failed to signal server:", err);
+	}
 }
 
 browser.runtime.onMessage.addListener((message) => {
-    if (message.action === "START_DOWNLOAD") {
-        console.log("Message received from popup! Starting...");
+	if (message.action === "START_DOWNLOAD") {
+		console.log("Message received from popup! Starting...");
 
-        // Call your function (limit 0 = all pages)
-        downloadShonenJumpPages(message.limit || 0)
-            .catch(err => console.error("Download failed:", err));
+		downloadShonenJumpPages(message.limit || 0)
+			.catch(err => console.error("Download failed:", err));
 
-        // Optional: Send a response back to the popup
-        return Promise.resolve({ status: "started" });
-    }
+		return Promise.resolve({ status: "started" });
+	}
 });
