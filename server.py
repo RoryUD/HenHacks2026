@@ -7,6 +7,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
+import webbrowser
 
 # Add comic-text-detector folder to path to allow import
 sys.path.append(str(Path(__file__).parent / "comic-text-detector"))
@@ -226,6 +227,7 @@ def main(num_pages=0):
             print(f"  [ERROR] {image_path}: {e}")
 
     print(f"\nAll done! Saved in: {output_dir}")
+    # webbrowser.open("http://localhost:5001/viewer")
 
 
 # ----------------------------------------
@@ -254,6 +256,19 @@ def run_processing():
         "status": "started",
         "num_pages": num_pages if num_pages > 0 else "all"
     })
+
+@app.route('/pages', methods=['GET'])
+def get_pages():
+    output_dir = Path(__file__).parent / "processed"
+    files = sorted(output_dir.glob("manga_page_*.png"))
+    filenames = [f.name for f in files]
+    return jsonify({"pages": filenames})
+
+@app.route('/pages/<filename>', methods=['GET'])
+def get_page_image(filename):
+    from flask import send_from_directory
+    output_dir = Path(__file__).parent / "processed"
+    return send_from_directory(str(output_dir), filename)
 
 
 if __name__ == '__main__':
