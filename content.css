@@ -1,0 +1,170 @@
+/* Floating button container */
+#manga-enlarge-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    border-radius: 50%;
+    box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+    cursor: pointer;
+    z-index: 999999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+#manga-enlarge-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 28px rgba(255, 107, 107, 0.6);
+}
+
+#manga-enlarge-btn:active {
+    transform: scale(1.1);
+    box-shadow: 0 6px 28px rgba(255, 107, 107, 0.6);
+}
+
+#manga-enlarge-btn:active {
+    transform: scale(0.95);
+}
+
+/* Icon inside button */
+#manga-enlarge-btn::before {
+    content: "📖";
+    font-size: 28px;
+    user-select: none;
+}
+
+/* Modal overlay (dark backdrop) */
+#manga-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 999998;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+#manga-modal-overlay.show {
+    display: flex;
+}
+
+/* Modal container */
+#manga-modal {
+    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 50%, #2d1a1a 100%);
+    padding: 20px;
+    border-radius: 16px;
+    width: 320px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+}
+
+/* Modal containers (matching your popup) */
+.modal-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.modal-container:last-child {
+    margin-bottom: 0;
+}
+
+/* Title */
+#modal-title-container {
+    text-align: center;
+    padding: 12px;
+}
+
+#modal-title-container h1 {
+    margin: 0;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Settings */
+#modal-settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#modal-settings-container label {
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#modal-num-pages {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    padding: 10px 12px;
+    outline: none;
+    transition: all 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#modal-num-pages:focus {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Action button */
+#modal-action-container {
+    padding: 8px;
+}
+
+#modal-enlarge-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#modal-enlarge-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+}
+
+#modal-enlarge-btn:active {
+    transform: translateY(0);
+}

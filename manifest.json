@@ -7,7 +7,8 @@
   "permissions": [
   	"downloads",
 	"https://cdn-ak-img.shonenjumpplus.com/*",
-	"activeTab"
+	"activeTab",
+  "tabs"
   ],
 
   "icons": {
@@ -17,7 +18,8 @@
   "content_scripts": [
     {
       "matches": ["https://shonenjumpplus.com/episode/*"],
-      "js": ["download_pages.js"]
+      "js": ["download_pages.js", "content.js"],
+      "css": ["content.css"]
     }
   ],
 
