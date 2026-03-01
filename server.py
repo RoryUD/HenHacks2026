@@ -1,5 +1,7 @@
 import sys
 import os
+import json
+import time
 from pathlib import Path
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -55,34 +57,78 @@ class MangaTextExtractor:
         
         # Initialize Gemini Model
         if GOOGLE_API_KEY:
-            self.translation_model = genai.GenerativeModel('gemini-pro')
+            self.translation_model = genai.GenerativeModel('gemini-2.5-flash')
         else:
             self.translation_model = None
 
-    def translate_text(self, text):
+    def translate_batch(self, texts):
         """
-        Translates Japanese text to English using Gemini.
+        Translates a list of Japanese texts to English using Gemini in a single batch request.
         """
         if not self.translation_model:
-            # return "[Translation Disabled: No API Key]"
-            return "[Translation Skipped]"
+            return ["[Translation Skipped]"] * len(texts)
         
-            
-        if not text or text.strip() == "":
-            return ""
+        valid_indices = [i for i, t in enumerate(texts) if t and t.strip()]
+        if not valid_indices:
+            return [""] * len(texts)
+
+        # Prepare batch prompt
+        joined_text = "\n".join([f"[{i}] {texts[i]}" for i in valid_indices])
+        prompt = (
+            "Translate the following Japanese manga lines to English. "
+            "Maintain the original tone. "
+            "Output the result as a JSON object where keys are the indices and values are the translations.\n"
+            "Example format: {\"0\": \"Hello\", \"1\": \"World\"}\n\n"
+            f"{joined_text}"
+        )
         
-        try:
-            prompt = f"Translate the following Japanese manga text to English. Output only the translation:\n\n{text}"
-            response = self.translation_model.generate_content(prompt)
-            return response.text.strip()
-        except Exception as e:
-            print(f"Translation error: {e}")
-            return "[Translation Failed]"
+        max_retries = 3
+        wait_time = 2 
+
+        for attempt in range(max_retries):
+            try:
+                response = self.translation_model.generate_content(
+                    prompt, 
+                    generation_config={"response_mime_type": "application/json"}
+                )
+                
+                # Geminiがマークダウン（```json ... ```）をつけてきた場合に取り除く安全策
+                raw_text = response.text.strip()
+                if raw_text.startswith("```json"):
+                    raw_text = raw_text[7:]
+                elif raw_text.startswith("```"):
+                    raw_text = raw_text[3:]
+                
+                if raw_text.endswith("```"):
+                    raw_text = raw_text[:-3]
+                    
+                translation_map = json.loads(raw_text.strip())
+                
+                # reconstruct list
+                results = []
+                for i in range(len(texts)):
+                    if i in valid_indices:
+                        # Convert key to string because JSON keys are always strings
+                        results.append(translation_map.get(str(i), "[Translation Failed]"))
+                    else:
+                        results.append("")
+                return results
+
+            except Exception as e:
+                error_str = str(e)
+                if "429" in error_str:
+                    print(f"Rate limit exceeded (429). Retrying in {wait_time}s... (Attempt {attempt + 1}/{max_retries})")
+                    time.sleep(wait_time)
+                    wait_time *= 2  # Exponential backoff (待機時間を倍にしていく)
+                else:
+                    print(f"Batch translation error: {e}")
+                    break
+        
+        return ["[Translation Failed]"] * len(texts)
 
     def _get_boxes_from_detector(self, img_array):
         """
         Internal helper to get coordinates using Comic Text Detector.
-        Changed to accept numpy array directly.
         """
         # Run inference to get speech bubble information
         mask, mask_refined, blk_list = self.text_detector(img_array)
@@ -110,7 +156,7 @@ class MangaTextExtractor:
 
     def extract(self, image_path):
         """
-        Extract text from a manga page image.
+        Extract text from a manga page image and translate it in batch.
         """
         image_path = str(image_path)
         
@@ -129,39 +175,36 @@ class MangaTextExtractor:
         bubble_data_list = self._get_boxes_from_detector(cv_img) 
         
         results = []
+        raw_texts = []
         
-        # 2. Loop through and process the number of found speech bubbles
+        # 2. First pass: Extract all text via OCR
         for i, data in enumerate(bubble_data_list):
             box = data["position"]
+            if box[2] <= box[0] or box[3] <= box[1]: # valid check
+                 continue
+
             # Crop only the speech bubble part using the coordinates
-            cropped_img = original_img.crop(box)
+            cropped_img = original_img.crop((box[0], box[1], box[2], box[3]))
             
             # Pass the cropped image to manga-ocr to recognize text
             text = self.mocr(cropped_img)
             
             data["id"] = i
             data["text"] = text
-            
-            # Translate Logic
-            print(f"Translating: {text}...")
-            data["english"] = self.translate_text(text)
-
+            raw_texts.append(text)
             results.append(data)
+            
+        # 3. Batch Translate (ここで一括翻訳を実行！)
+        if raw_texts:
+            print(f"Translating {len(raw_texts)} bubbles in batch...")
+            translations = self.translate_batch(raw_texts)
+            for i, data in enumerate(results):
+                data["english"] = translations[i]
             
         return results
 
-# Initialize Global Extractor
+# グローバル変数の定義
 extractor = None
-
-@app.before_request
-def initialize():
-    global extractor
-    if extractor is None:
-        # Initialize only once
-        try:
-            extractor = MangaTextExtractor()
-        except Exception as e:
-            print(f"Error initializing models: {e}")
 
 @app.route('/process', methods=['POST'])
 def process_image():
@@ -194,5 +237,13 @@ def health():
     return "Manga Extractor Server is Running!"
 
 if __name__ == '__main__':
-    # Run the server on port 5000
+    # サーバーを起動する前に、ここで1回だけ重いモデルを読み込んでおく（タイムアウト対策）
+    print("Initializing models before starting server...")
+    try:
+        extractor = MangaTextExtractor()
+    except Exception as e:
+        print(f"Error initializing models: {e}")
+        
+    # Run the server on port 5001
+    print("Starting Flask server on port 5001...")
     app.run(host='0.0.0.0', port=5001, debug=False)
