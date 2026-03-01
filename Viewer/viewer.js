@@ -47,12 +47,29 @@ const zoomOutBtn = document.getElementById("zoom-out");
       showPage(currentPage);
 }
 
+// function showPage(index) {
+//     // If it's a data URL, use directly; if it's a path, get extension URL
+//     if (pages[index].startsWith('data:')) {
+//         imgElement.src = pages[index];
+//     } else {
+//         imgElement.src = browser.runtime.getURL(pages[index]);
+//     }
+//     updateProgressBar();
+// }
+
 function showPage(index) {
-    // If it's a data URL, use directly; if it's a path, get extension URL
     if (pages[index].startsWith('data:')) {
+        // ブラウザストレージからのdata URL
         imgElement.src = pages[index];
-    } else {
+    } else if (pages[index].startsWith('http')) {
+        // 既にフルURLの場合
+        imgElement.src = pages[index];
+    } else if (pages[index].startsWith('Placeholders')) {
+        // プレースホルダー
         imgElement.src = browser.runtime.getURL(pages[index]);
+    } else {
+        // サーバーのprocessed/から取得
+        imgElement.src = `http://localhost:5001/pages/${pages[index]}`;
     }
     updateProgressBar();
 }

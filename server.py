@@ -239,23 +239,31 @@ def health():
     return "Manga Server is Running!"
 
 
+# @app.route('/run', methods=['POST'])
+# def run_processing():
+#     """
+#     JS からダウンロード完了後に呼ばれるエンドポイント。
+#     body (JSON): { "num_pages": 3 }  ← 省略時は全件処理
+#     """
+#     data = request.get_json(silent=True) or {}
+#     num_pages = int(data.get("num_pages", 0))
+
+#     # バックグラウンドで実行（レスポンスをすぐ返すため）
+#     thread = threading.Thread(target=main, args=(num_pages,))
+#     thread.start()
+
+#     return jsonify({
+#         "status": "started",
+#         "num_pages": num_pages if num_pages > 0 else "all"
+#     })
 @app.route('/run', methods=['POST'])
 def run_processing():
-    """
-    JS からダウンロード完了後に呼ばれるエンドポイント。
-    body (JSON): { "num_pages": 3 }  ← 省略時は全件処理
-    """
     data = request.get_json(silent=True) or {}
     num_pages = int(data.get("num_pages", 0))
 
-    # バックグラウンドで実行（レスポンスをすぐ返すため）
-    thread = threading.Thread(target=main, args=(num_pages,))
-    thread.start()
+    main(num_pages)
 
-    return jsonify({
-        "status": "started",
-        "num_pages": num_pages if num_pages > 0 else "all"
-    })
+    return jsonify({"status": "done"})
 
 @app.route('/pages', methods=['GET'])
 def get_pages():
