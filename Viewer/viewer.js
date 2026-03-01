@@ -45,7 +45,6 @@ const zoomOutBtn = document.getElementById("zoom-out");
       }
 
       showPage(currentPage);
-  }
 }
 
 function showPage(index) {

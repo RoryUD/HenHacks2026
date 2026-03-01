@@ -67,18 +67,6 @@ enlargeBtn.addEventListener("click", async () => {
       alert("Please enter a valid number of pages (1-100).");
       return;
     }
-    
-    // Call the correct function from download_pages.js
-    if (typeof downloadShonenJumpPages === 'function') {
-      downloadShonenJumpPages(numPages);
-    } else {
-      console.error("downloadShonenJumpPages function not available");
-      if(window.downloadShonenJumpPages) {
-          window.downloadShonenJumpPages(numPages);
-      } else {
-         alert("Error: Download function not loaded. Please refresh the page.");
-      }
-    }
 
     // Hide button, show progress bar
     enlargeBtn.style.display = "none";
