@@ -78,19 +78,48 @@ async function downloadShonenJumpPages(limit) {
 
 	console.log("Finished downloading all pages.");
 
-	// server.py へシグナル送信
+	// Send signal to server to start processing
 	const xhr = new XMLHttpRequest();
 	xhr.open("POST", "http://localhost:5001/run", true);
 	xhr.setRequestHeader("Content-Type", "application/json");
 	xhr.onload = () => {
 		const result = JSON.parse(xhr.responseText);
-		if (result.status === "done") {
-			// 処理完了 → viewerを開く
-			browser.runtime.sendMessage({ action: "openViewer" });
+		if (result.status === "started") {
+			pollForCompletion();
 		}
 	};
 	xhr.onerror = () => console.error("Failed to signal server");
 	xhr.send(JSON.stringify({ num_pages: actualLimit }));
+}
+
+// Poll the server to check if processing is complete
+function pollForCompletion() {
+	const checkProgress = () => {
+		fetch("http://localhost:5001/progress")
+			.then(res => res.json())
+			.then(data => {
+				// Send progress update to UI
+				browser.runtime.sendMessage({
+					action: "PROCESSING_PROGRESS",
+					current: data.progress,
+					total: data.total
+				});
+
+				if (data.done) {
+					console.log("Processing complete! Opening viewer...");
+					browser.runtime.sendMessage({ action: "openViewer" });
+				} else {
+					// Still processing, check again in 2 seconds
+					setTimeout(checkProgress, 2000);
+				}
+			})
+			.catch(err => {
+				console.error("Failed to check progress:", err);
+				setTimeout(checkProgress, 2000);
+			});
+	};
+
+	checkProgress();
 }
 
 // Make it globally available

@@ -8,6 +8,15 @@ browser.runtime.onMessage.addListener(async (message) => {
       return;
     }
 
+    // Handle openViewer message - forward to content script
+    if (message.action === "openViewer") {
+      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tabs[0]) {
+        browser.tabs.sendMessage(tabs[0].id, message);
+      }
+      return;
+    }
+
     // Handle START_DOWNLOAD message by forwarding to the active tab
     if (message.action === "START_DOWNLOAD") {
       const tabs = await browser.tabs.query({ active: true, currentWindow: true });
@@ -18,8 +27,8 @@ browser.runtime.onMessage.addListener(async (message) => {
       return { status: "error", error: "No active tab found" };
     }
 
-    // Forward DOWNLOAD_PROGRESS messages back to the content script
-    if (message.action === "DOWNLOAD_PROGRESS") {
+    // Forward DOWNLOAD_PROGRESS and PROCESSING_PROGRESS messages to content script
+    if (message.action === "DOWNLOAD_PROGRESS" || message.action === "PROCESSING_PROGRESS") {
       const tabs = await browser.tabs.query({ active: true, currentWindow: true });
       if (tabs[0]) {
         browser.tabs.sendMessage(tabs[0].id, message);

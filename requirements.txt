@@ -111,13 +111,13 @@ termcolor==3.3.0
 threadpoolctl==3.6.0
 tifffile==2026.2.24
 tinysegmenter3==0.1.0
-tokenizers==0.22.2
+tokenizers==0.19.1
 torch==2.10.0
 torchinfo==1.8.0
 torchsummary==1.5.1
 torchvision==0.25.0
 tqdm==4.67.3
-transformers==5.2.0
+transformers==4.41.0
 typer==0.24.1
 typer-slim==0.24.0
 typing-inspection==0.4.2
