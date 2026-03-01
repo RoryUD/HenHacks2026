@@ -57,6 +57,10 @@ This project extracts text from manga images using `comic-text-detector` for spe
     # ...existing code...
     ```
 
+## Display Overlay / Frontend
+
+For details on the browser overlay, translation features, and display settings, please refer to the dedicated [README_DISPLAY.md](README_DISPLAY.md).
+
 ## Usage
 
 1.  **Start the Server:**
