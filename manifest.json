@@ -5,11 +5,13 @@
 
   "description": "Enlarges Text with High Resolution on Popular Manga Sites",
   "permissions": [
-  	"downloads",
-	"https://cdn-ak-img.shonenjumpplus.com/*",
-	"activeTab",
-  "tabs",
-  "storage"
+      "downloads",
+      "tabs",
+      "storage",
+      "https://cdn-ak-img.shonenjumpplus.com/*",
+      "http://localhost:5001/*",
+      "activeTab",
+      "<all_urls>"
   ],
 
   "icons": {

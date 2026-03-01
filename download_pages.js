@@ -1,4 +1,5 @@
 async function downloadShonenJumpPages(limit) {
+
 	const DIVIDE_NUM = 4;
 	const imageDataUrls = []; // Array to collect all data URLs
 	console.log(`Starting download for all pages using DIVIDE_NUM = ${DIVIDE_NUM}...`);
@@ -102,44 +103,46 @@ async function downloadShonenJumpPages(limit) {
 		}
 	}
 
-	//console.log("Finished downloading all pages.");
-	console.log("Finished processing all pages. Saving to storage...")
+	console.log("Finished processing all pages. Saving to storage...");
 
-	// Save all data URLs to browser storage
-	await browser.storage.local.set({ mangaPages: imageDataUrls });
-	console.log(`Saved ${imageDataUrls.length} pages to browser storage.`);
+      // Save all data URLs to browser storage
+      await browser.storage.local.set({ mangaPages: imageDataUrls });
+      console.log(`Saved ${imageDataUrls.length} pages to browser storage.`);
 
-	return imageDataUrls; // Return for confirmation
-}
+      // Also trigger server processing if available
+      try {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", "http://localhost:5001/run", true);
+          xhr.setRequestHeader("Content-Type", "application/json");
+          xhr.onload = () => console.log("Server processing started:", xhr.responseText);
+          xhr.onerror = () => console.error("Server not available, using storage only");
+          xhr.send(JSON.stringify({ num_pages: actualLimit }));
+      } catch (err) {
+          console.error("Failed to signal server:", err);
+      }
 
-// browser.runtime.onMessage.addListener((message) => {
-//     if (message.action === "START_DOWNLOAD") {
-//         console.log("Message received from popup! Starting...");
+      return imageDataUrls; // Return for confirmation
+  }
 
-//         // Call your function (limit 0 = all pages)
-//         downloadShonenJumpPages(message.limit || 0)
-//             .catch(err => console.error("Download failed:", err));
+  // Make it globally available
+  window.downloadShonenJumpPages = downloadShonenJumpPages;
 
-//         // Optional: Send a response back to the popup
-//         return Promise.resolve({ status: "started" });
-//     }
-// });
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message.action === "START_DOWNLOAD") {
+          console.log("Message received! Starting download...");
 
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	if (message.action === "START_DOWNLOAD") {
-		console.log("Message received! Starting download...");
+          // Call async function and send response when done
+          downloadShonenJumpPages(message.limit || 0)
+              .then(imageDataUrls => {
+                  console.log("Download complete, sending response");
+                  sendResponse({ status: "complete", count: imageDataUrls.length });
+              })
+              .catch(err => {
+                  console.error("Download failed:", err);
+                  sendResponse({ status: "error", error: err.message });
+              });
 
-		// Call async function and send response when done
-		downloadShonenJumpPages(message.limit || 0)
-			.then(imageDataUrls => {
-				console.log("Download complete, sending response");
-				sendResponse({ status: "complete", count: imageDataUrls.length });
-			})
-			.catch(err => {
-				console.error("Download failed:", err);
-				sendResponse({ status: "error", error: err.message });
-			});
-		
-		return true; // Keep message channel open for async responses
-	}
+          return true; // Keep message channel open for async responses
+      }
+
 });

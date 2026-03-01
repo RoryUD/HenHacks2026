@@ -1,3 +1,6 @@
+console.log("content.js loaded");
+console.log("downloadShonenJumpPages:", typeof downloadShonenJumpPages);
+
 // Create the floating button
 const floatingBtn = document.createElement("div");
 floatingBtn.id = "manga-enlarge-btn";
@@ -63,6 +66,18 @@ enlargeBtn.addEventListener("click", async () => {
     if (!numPages || numPages < 1 || numPages > 100) {
       alert("Please enter a valid number of pages (1-100).");
       return;
+    }
+    
+    // Call the correct function from download_pages.js
+    if (typeof downloadShonenJumpPages === 'function') {
+      downloadShonenJumpPages(numPages);
+    } else {
+      console.error("downloadShonenJumpPages function not available");
+      if(window.downloadShonenJumpPages) {
+          window.downloadShonenJumpPages(numPages);
+      } else {
+         alert("Error: Download function not loaded. Please refresh the page.");
+      }
     }
 
     // Hide button, show progress bar
