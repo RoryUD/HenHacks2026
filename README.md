@@ -60,10 +60,10 @@ This project extracts text from manga images using `comic-text-detector` for spe
 ## Usage
 
 1.  Place your manga image in the project root (e.g., `image.png`).
-2.  Update the `image_file` path in `text_extracter.py` if necessary.
+2.  Update the `image_file` path in `python3 server.py` if necessary.
 3.  Run the extractor:
     ```bash
-    python3 text_extracter.py
+    python3 server.py
     ```
 
 The script will output the detected speech bubbles' positions and the recognized text.
