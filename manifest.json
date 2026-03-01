@@ -26,7 +26,7 @@
       "js": [
         "download_pages.js",
         "process_manga.js",
-        "display_results.js",
+        "display_img.js",
         "main.js"
       ]
     }
