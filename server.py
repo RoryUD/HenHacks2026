@@ -196,9 +196,20 @@ def process_image(image_path, extractor, font_path, output_dir):
 
 
 def main(num_pages=0):
+    global global_extractor, processing_status
+
+    # Try Downloads first, fall back to project downloads folder
     downloads_dir = Path.home() / "Downloads"
+
+    if not downloads_dir.exists() or not os.access(downloads_dir, os.R_OK):
+        downloads_dir = Path(__file__).parent / "downloads"
+
     output_dir = Path(__file__).parent / "processed"
     output_dir.mkdir(exist_ok=True)
+
+    # Clean up old processed files before starting new job
+    for old_file in output_dir.glob("manga_page_*.png"):
+        old_file.unlink()
 
     font_path = "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc"
     try:
@@ -218,16 +229,29 @@ def main(num_pages=0):
 
     print(f"Processing {len(image_files)} file(s)...")
 
-    extractor = MangaTextExtractor()
+    # Reuse global extractor to avoid reloading models
+    if global_extractor is None:
+        print("Loading models...")
+        global_extractor = MangaTextExtractor()
+    else:
+        print("Reusing loaded models")
 
-    for image_path in image_files:
+    for i, image_path in enumerate(image_files, 1):
         try:
-            process_image(image_path, extractor, font_path, output_dir)
+            print(f"[{i}/{len(image_files)}] Processing: {Path(image_path).name}")
+            process_image(image_path, global_extractor, font_path, output_dir)
+
+            # Update global progress
+            processing_status["progress"] = i
         except Exception as e:
             print(f"  [ERROR] {image_path}: {e}")
+            import traceback
+            traceback.print_exc()
 
-    print(f"\nAll done! Saved in: {output_dir}")
-    # webbrowser.open("http://localhost:5001/viewer")
+    print(f"\n✓ Processing complete! {len(image_files)} page(s) processed")
+    print(f"  View at: http://localhost:5001/viewer\n")
+    processing_status["done"] = True
+    processing_status["is_processing"] = False
 
 
 # ----------------------------------------
@@ -239,31 +263,51 @@ def health():
     return "Manga Server is Running!"
 
 
-# @app.route('/run', methods=['POST'])
-# def run_processing():
-#     """
-#     JS からダウンロード完了後に呼ばれるエンドポイント。
-#     body (JSON): { "num_pages": 3 }  ← 省略時は全件処理
-#     """
-#     data = request.get_json(silent=True) or {}
-#     num_pages = int(data.get("num_pages", 0))
+processing_status = {"is_processing": False, "progress": 0, "total": 0, "done": False}
+# Global extractor to reuse across requests (avoids reloading models)
+global_extractor = None
 
-#     # バックグラウンドで実行（レスポンスをすぐ返すため）
-#     thread = threading.Thread(target=main, args=(num_pages,))
-#     thread.start()
-
-#     return jsonify({
-#         "status": "started",
-#         "num_pages": num_pages if num_pages > 0 else "all"
-#     })
 @app.route('/run', methods=['POST'])
 def run_processing():
+    global processing_status
     data = request.get_json(silent=True) or {}
     num_pages = int(data.get("num_pages", 0))
 
-    main(num_pages)
+    # Reset status
+    processing_status = {"is_processing": True, "progress": 0, "total": num_pages, "done": False}
 
-    return jsonify({"status": "done"})
+    # Run in background thread
+    thread = threading.Thread(target=main, args=(num_pages,))
+    thread.daemon = True
+    thread.start()
+
+    return jsonify({"status": "started", "num_pages": num_pages})
+
+@app.route('/progress', methods=['GET'])
+def get_progress():
+    """Check processing progress"""
+    return jsonify(processing_status)
+
+@app.route('/status', methods=['GET'])
+def get_status():
+    """Check how many files are in downloads vs processed"""
+    downloads_dir = Path.home() / "Downloads"
+    if not downloads_dir.exists() or not os.access(downloads_dir, os.R_OK):
+        downloads_dir = Path(__file__).parent / "downloads"
+
+    output_dir = Path(__file__).parent / "processed"
+
+    download_files = sorted(downloads_dir.glob("manga_page_*.png"))
+    processed_files = sorted(output_dir.glob("manga_page_*.png"))
+
+    return jsonify({
+        "downloads_folder": str(downloads_dir),
+        "downloads_count": len(download_files),
+        "downloads": [f.name for f in download_files],
+        "processed_count": len(processed_files),
+        "processed": [f.name for f in processed_files],
+        "processing": processing_status
+    })
 
 @app.route('/pages', methods=['GET'])
 def get_pages():
@@ -277,6 +321,37 @@ def get_page_image(filename):
     from flask import send_from_directory
     output_dir = Path(__file__).parent / "processed"
     return send_from_directory(str(output_dir), filename)
+
+@app.route('/viewer', methods=['GET'])
+def viewer():
+    """Simple HTML viewer for processed images"""
+    output_dir = Path(__file__).parent / "processed"
+    files = sorted(output_dir.glob("manga_page_*.png"))
+
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Manga Viewer</title>
+        <style>
+            body { background: #1a1a1a; color: white; font-family: Arial; text-align: center; }
+            img { max-width: 90%; margin: 20px auto; display: block; border: 2px solid #333; }
+            h1 { margin: 20px; }
+        </style>
+    </head>
+    <body>
+        <h1>Processed Manga Pages</h1>
+    """
+
+    for f in files:
+        html += f'<img src="/pages/{f.name}" alt="{f.name}"><br>\n'
+
+    html += """
+    </body>
+    </html>
+    """
+
+    return html
 
 
 if __name__ == '__main__':

@@ -82,23 +82,21 @@ enlargeBtn.addEventListener("click", async () => {
 
         if (response && response.status === "complete") {
             console.log(`Downloaded ${response.count} pages`);
-
-            // Open viewer
-            await browser.runtime.sendMessage({
-            action: "openResult",
-            numPages: response.count
-            });
-
-            // Close modal
-            modalOverlay.classList.remove("show");
+            enlargeProgressText.textContent = `Processing pages on server...`;
+            // Don't open viewer yet - wait for server to finish processing
+            // The viewer will open automatically when pollForCompletion() detects completion
         } else {
             alert("Download failed. Please try again.");
+            // Reset UI on failure
+            enlargeBtn.style.display = "block";
+            enlargeBtn.disabled = false;
+            enlargeProgressText.style.display = "none";
+            enlargeProgressBar.style.width = "0%";
         }
     } catch (err) {
         console.error("Error:", err);
         alert("An error occurred. Check console for details.");
-    } finally {
-        // Reset: show button, hide progress
+        // Reset UI on error
         enlargeBtn.style.display = "block";
         enlargeBtn.disabled = false;
         enlargeProgressText.style.display = "none";
@@ -106,13 +104,31 @@ enlargeBtn.addEventListener("click", async () => {
     }
 });
 
-// Listen for download progress updates
+// Listen for download and processing progress updates
 browser.runtime.onMessage.addListener((message) => {
-    console.log("Message received in content.js:", message);
     if (message.action === "DOWNLOAD_PROGRESS") {
         const percent = (message.current / message.total) * 100;
-        console.log(`Progress update: ${message.current}/${message.total} = ${percent}%`);
+        enlargeProgressText.textContent = `Downloading ${message.current}/${message.total}...`;
+        enlargeProgressBar.style.width = `${percent}%`;
+    }
+
+    if (message.action === "PROCESSING_PROGRESS") {
+        const percent = (message.current / message.total) * 100;
         enlargeProgressText.textContent = `Processing ${message.current}/${message.total}...`;
         enlargeProgressBar.style.width = `${percent}%`;
+    }
+
+    if (message.action === "openViewer") {
+        // Open viewer
+        browser.runtime.sendMessage({
+            action: "openResult"
+        });
+        // Close modal
+        modalOverlay.classList.remove("show");
+        // Reset UI
+        enlargeBtn.style.display = "block";
+        enlargeBtn.disabled = false;
+        enlargeProgressText.style.display = "none";
+        enlargeProgressBar.style.width = "0%";
     }
 });
