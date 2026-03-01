@@ -1,6 +1,7 @@
 async function downloadShonenJumpPages(limit) {
 
 	const DIVIDE_NUM = 4;
+	const imageDataUrls = []; // Array to collect all data URLs
 	console.log(`Starting download for all pages using DIVIDE_NUM = ${DIVIDE_NUM}...`);
 
 	// 1. Get Metadata
@@ -72,38 +73,76 @@ async function downloadShonenJumpPages(limit) {
 				ctx.drawImage(img, i, t, cell_width, cell_height, s, o, cell_width, cell_height);
 			}
 
-			// Step 3: Trigger Download
-			const dataUrl = canvas.toDataURL("image/png");
-			const link = document.createElement('a');
-			link.download = `manga_page_${pageNum}.png`;
-			link.href = dataUrl;
-			link.click();
+			// // Step 3: Trigger Download
+			// const dataUrl = canvas.toDataURL("image/png");
+			// const link = document.createElement('a');
+			// link.download = `manga_page_${pageNum}.png`;
+			// link.href = dataUrl;
+			// link.click();
 
-			// Step 4: Small delay to prevent browser download congestion
-			await new Promise(r => setTimeout(r, 300));
+			// // Step 4: Small delay to prevent browser download congestion
+			// await new Promise(r => setTimeout(r, 300));
+
+			// Step 3: Store data URL in array
+  			const dataUrl = canvas.toDataURL("image/png");
+  			imageDataUrls.push(dataUrl);
+  			console.log(`Stored page ${pageNum} in memory`);
+
+  			// Send progress update
+  			browser.runtime.sendMessage({
+    			action: "DOWNLOAD_PROGRESS",
+    			current: index + 1,
+    			total: actualLimit
+  			});
+
+  			// Step 4: Small delay between processing
+  			await new Promise(r => setTimeout(r, 100));
 
 		} catch (err) {
 			console.error(`Error on page ${pageNum}:`, err);
 		}
 	}
 
-	console.log("Finished downloading all pages.");
+	console.log("Finished processing all pages. Saving to storage...");
 
-	try {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "http://localhost:5001/run", true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.onload = () => console.log("Server processing started:", xhr.responseText);
-    xhr.onerror = () => console.error("Failed to signal server");
-    xhr.send(JSON.stringify({ num_pages: actualLimit }));
-} catch (err) {
-    console.error("Failed to signal server:", err);
-}
-}
+      // Save all data URLs to browser storage
+      await browser.storage.local.set({ mangaPages: imageDataUrls });
+      console.log(`Saved ${imageDataUrls.length} pages to browser storage.`);
 
-// Make it globally available explicitly
-window.downloadShonenJumpPages = downloadShonenJumpPages;
+      // Also trigger server processing if available
+      try {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", "http://localhost:5001/run", true);
+          xhr.setRequestHeader("Content-Type", "application/json");
+          xhr.onload = () => console.log("Server processing started:", xhr.responseText);
+          xhr.onerror = () => console.error("Server not available, using storage only");
+          xhr.send(JSON.stringify({ num_pages: actualLimit }));
+      } catch (err) {
+          console.error("Failed to signal server:", err);
+      }
 
-browser.runtime.onMessage.addListener((message) => {
-	// ...existing message handling code...
+      return imageDataUrls; // Return for confirmation
+  }
+
+  // Make it globally available
+  window.downloadShonenJumpPages = downloadShonenJumpPages;
+
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message.action === "START_DOWNLOAD") {
+          console.log("Message received! Starting download...");
+
+          // Call async function and send response when done
+          downloadShonenJumpPages(message.limit || 0)
+              .then(imageDataUrls => {
+                  console.log("Download complete, sending response");
+                  sendResponse({ status: "complete", count: imageDataUrls.length });
+              })
+              .catch(err => {
+                  console.error("Download failed:", err);
+                  sendResponse({ status: "error", error: err.message });
+              });
+
+          return true; // Keep message channel open for async responses
+      }
+
 });

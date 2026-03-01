@@ -8,6 +8,25 @@ browser.runtime.onMessage.addListener(async (message) => {
       return;
     }
 
+    // Handle START_DOWNLOAD message by forwarding to the active tab
+    if (message.action === "START_DOWNLOAD") {
+      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tabs[0]) {
+        const response = await browser.tabs.sendMessage(tabs[0].id, message);
+        return response;
+      }
+      return { status: "error", error: "No active tab found" };
+    }
+
+    // Forward DOWNLOAD_PROGRESS messages back to the content script
+    if (message.action === "DOWNLOAD_PROGRESS") {
+      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tabs[0]) {
+        browser.tabs.sendMessage(tabs[0].id, message);
+      }
+      return;
+    }
+
     const { width, height, blocks } = message;
 
     const canvas = new OffscreenCanvas(width, height);

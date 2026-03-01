@@ -13,7 +13,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: all 0.3s ease;
+    transition: width 0.3s ease;
     border: 2px solid rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(10px);
 }
@@ -145,19 +145,57 @@
     padding: 8px;
 }
 
+#enlarge-btn-wrapper {
+    position: relative;
+    width: 100%;
+    height: 50px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+#enlarge-progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    transition: width 0.3s ease;
+    z-index: 2;
+    border-radius: 10px;
+}
+
+#enlarge-progress-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
 #modal-enlarge-btn {
     width: 100%;
+    height: 100%;
     background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
     border: none;
     border-radius: 10px;
     color: white;
     font-size: 16px;
     font-weight: 600;
-    padding: 14px;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    transition: transform 0.2s;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    z-index: 2;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
 }
 
 #modal-enlarge-btn:hover {

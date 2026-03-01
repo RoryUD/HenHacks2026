@@ -1,3 +1,4 @@
+// Will be populated from browser storage
 let pages = [];
 let currentPage = 0;
 let zoomLevel = 1;
@@ -10,26 +11,50 @@ const nextBtn = document.getElementById("next-btn");
 const zoomInBtn = document.getElementById("zoom-in");
 const zoomOutBtn = document.getElementById("zoom-out");
 
-// processed/ から画像リストを取得して初期化
-async function init() {
-    try {
-        const res = await fetch("http://localhost:5001/pages");
-        const data = await res.json();
-        pages = data.pages; // ["manga_page_001.png", ...]
-        
-        if (pages.length === 0) {
-            imgElement.alt = "No processed pages found.";
-            return;
-        }
+// Initialize viewer - try server first, fallback to storage
+  async function init() {
+      try {
+          // Try to load from server first
+          const res = await fetch("http://localhost:5001/pages");
+          const data = await res.json();
+          pages = data.pages; // ["manga_page_001.png", ...]
 
-        showPage(currentPage);
-    } catch (err) {
-        console.error("Failed to load pages from server:", err);
-    }
+          if (pages.length > 0) {
+              console.log(`Loaded ${pages.length} pages from server`);
+              showPage(currentPage);
+              return;
+          }
+      } catch (err) {
+          console.log("Server not available, trying browser storage...", err);
+      }
+
+      // Fallback to browser storage
+      const result = await browser.storage.local.get("mangaPages");
+
+      if (result.mangaPages && result.mangaPages.length > 0) {
+          pages = result.mangaPages;
+          console.log(`Loaded ${pages.length} pages from storage`);
+      } else {
+          // Final fallback to placeholders
+          pages = [
+              browser.runtime.getURL("Placeholders/page1.png"),
+              browser.runtime.getURL("Placeholders/page2.png"),
+              browser.runtime.getURL("Placeholders/page3.png")
+          ];
+          console.log("No stored pages found, using placeholders");
+      }
+
+      showPage(currentPage);
+  }
 }
 
 function showPage(index) {
-    imgElement.src = `http://localhost:5001/pages/${pages[index]}`;
+    // If it's a data URL, use directly; if it's a path, get extension URL
+    if (pages[index].startsWith('data:')) {
+        imgElement.src = pages[index];
+    } else {
+        imgElement.src = browser.runtime.getURL(pages[index]);
+    }
     updateProgressBar();
 }
 

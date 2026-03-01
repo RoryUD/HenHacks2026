@@ -47,6 +47,7 @@ body {
     color: white;
     font-size: 18px;
     padding: 8px 16px;
+    min-width: 75px;
     cursor: pointer;
     transition: all 0.2s;
 }
