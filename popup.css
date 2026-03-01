@@ -1,0 +1,90 @@
+body {
+    margin: 0;
+    padding: 16px;
+    background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 50%, #2d1a1a);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    width: 320px;
+    min-height: 200px;
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.container:last-child {
+    margin-bottom: 0;
+}
+
+#title-container {
+    text-align: center;
+    padding: 12px;
+}
+
+#title-container h1 {
+    margin: 0;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+}
+
+#settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#settings-container label {
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+#num-pages {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    padding: 10px 12px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+#num-pages:focus {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+#action-container {
+    padding: 8px;
+}
+
+#enlarge-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+#enlarge-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+}
+
+#enlarge-btn:active {
+    transform: translateY(0);
+}

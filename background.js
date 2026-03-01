@@ -8,7 +8,6 @@ browser.runtime.onMessage.addListener(async (message) => {
       return;
     }
 
-    const { width, height, text, x1, y1, x2, y2 } = message;
     const { width, height, blocks } = message;
 
     const canvas = new OffscreenCanvas(width, height);

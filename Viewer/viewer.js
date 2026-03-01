@@ -64,17 +64,17 @@ function zoomOut() {
 }
 
 // Button click handlers
-prevBtn.addEventListener("click", prevPage);
-nextBtn.addEventListener("click", nextPage);
+prevBtn.addEventListener("click", nextPage); // Left button goes forward (Japanese manga style)
+nextBtn.addEventListener("click", prevPage); // Right button goes backward (Japanese manga style)
 zoomInBtn.addEventListener("click", zoomIn);
 zoomOutBtn.addEventListener("click", zoomOut);
 
 // Keyboard navigation
 document.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft") {
-        prevPage();
-    } else if (e.key === "ArrowRight") {
         nextPage();
+    } else if (e.key === "ArrowRight") {
+        prevPage();
     }
 });
 
